@@ -8,7 +8,6 @@ def get_files_info(Working_directory,directory='.'):
     working_abs = os.path.abspath(Working_directory)
     target_abs = os.path.normpath(os.path.join(working_abs, directory))
     
-
     target_in_work = os.path.commonpath([working_abs,target_abs]) == working_abs
 
     if not target_in_work:
