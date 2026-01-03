@@ -101,13 +101,11 @@ def call_function(function_call,verbose=False):
         )
     args = dict(function_call.args) if function_call.args else {}
     args['working_directory']=WORKING_DIR
-    if verbose:
-        print(f'''args: {function_call.args}
-        function: {function_call.name}         
-        ''')
+    
+    print(f'''Calling function: {function_name}
+args: {function_call.args}''')
+
     func_call_res = func_dict[function_name](**args)
-    if verbose:
-        print(f"-> {func_call_res}")
     
     return types.Content(
         role="tool",

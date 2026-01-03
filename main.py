@@ -10,38 +10,14 @@ from prompts import system_prompt
 from function_calls import available_functions, call_function, ai_res_dum
 from config import DUMMY
 
-def main():
 
-    parser = argparse.ArgumentParser(description="Chatbot")
-    parser.add_argument("user_prompt", type=str, help="User prompt")
-    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
-    args = parser.parse_args()
-
-    func_results = []
-    
-    load_dotenv()
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if api_key is None:
-        raise RuntimeError("No Gemini api key set in .env")
-
-    client = genai.Client(api_key=api_key)
-
-    user_prompt = args.user_prompt
-
-    messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
-
-    config=types.GenerateContentConfig(
-        tools=[available_functions], system_instruction=system_prompt
+def agent_call(client,messages,config,args,user_prompt,func_results):
+            
+    ai_res = client.models.generate_content(
+        model = 'gemini-2.5-flash',
+        contents = messages,
+        config = config
     )
-
-    if DUMMY:
-        ai_res = ai_res_dum
-    else:
-        ai_res = client.models.generate_content(
-            model = 'gemini-2.5-flash',
-            contents = messages,
-            config = config
-        )
 
     if ai_res.usage_metadata is None:
         raise RuntimeError('No response from the Agent')
@@ -69,9 +45,46 @@ def main():
             if not func_call_res.parts[0].function_response.response:
                 raise ValueError("Response is None")
             
-            func_results.append(func_call_res.parts[0])
+            func_results.append(func_call_res.parts)
+    
+    if return_text:
+        return return_text
+    
 
-    pprint.pprint(return_text,sort_dicts=False)
+
+
+def main():
+
+    parser = argparse.ArgumentParser(description="Chatbot")
+    parser.add_argument("user_prompt", type=str, help="User prompt")
+    parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
+    args = parser.parse_args()
+
+    func_results = []
+    
+    load_dotenv()
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if api_key is None:
+        raise RuntimeError("No Gemini api key set in .env")
+
+    client = genai.Client(api_key=api_key)
+
+    user_prompt = args.user_prompt
+    
+    messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
+
+    config=types.GenerateContentConfig(
+        tools=[available_functions], system_instruction=system_prompt
+    )
+
+        
+    for _ in range(10):
+        agent_res = agent_call(client,messages,config,args,user_prompt,func_results)
+        #print(func_results[-1].function_response)
+        if agent_res:
+            print(f'final response: {agent_res}')
+            break
+        messages.append(types.Content(role="user", parts=func_results[-1]))
 
 if __name__ == "__main__":
     main()
