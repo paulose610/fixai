@@ -24,7 +24,7 @@ def run_python_file(working_directory, file_path, args = None):
             if args:
                 command.extend(args)
             res = subprocess.run(args=command, capture_output=True, text=True, check=True, timeout=30, cwd=working_abs)
-            print(res.stdout,res.stderr,res.returncode)
+        
             if res.returncode>0:
                 return_str = f'Process exited with code {res.returncode}'
             elif res.stderr:
